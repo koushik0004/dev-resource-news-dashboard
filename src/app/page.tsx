@@ -1,65 +1,267 @@
-import Image from "next/image";
+'use client';
 
-export default function Home() {
+import { useMemo } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { useGetTrendingReposQuery } from '../lib/store/githubApi';
+import { useGetTopStoryIdsQuery, useGetStoryDetailsQuery } from '../lib/store/hackerNewsApi';
+import { setSearchQuery, setLanguageFilter } from '../lib/store/filterSlice';
+import type { RootState } from '../lib/store/store';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import type { GithubRepo } from '../lib/store/githubApi';
+
+// Main Dashboard Page
+export default function DashboardPage() {
+  const dispatch = useDispatch();
+  const { searchQuery, languageFilter } = useSelector((state: RootState) => state.filter);
+
+  const { data: reposData, isLoading: isLoadingRepos, error: reposError } = useGetTrendingReposQuery();
+  const { data: storyIds, isLoading: isLoadingStoryIds, error: storyIdsError } = useGetTopStoryIdsQuery();
+
+  const languages = useMemo(() => {
+    if (!reposData) return [];
+    const langSet = new Set(reposData.items.map(repo => repo.language).filter(Boolean) as string[]);
+    return ['All', ...Array.from(langSet)];
+  }, [reposData]);
+
+  const filteredRepos = useMemo(() => {
+    if (!reposData) return [];
+    return reposData.items.filter(repo => {
+      const matchesSearch = searchQuery === '' || 
+                            repo.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                            (repo.description && repo.description.toLowerCase().includes(searchQuery.toLowerCase()));
+      const matchesLanguage = languageFilter === 'All' || repo.language === languageFilter;
+      return matchesSearch && matchesLanguage;
+    });
+  }, [reposData, searchQuery, languageFilter]);
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black" id="home-page">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
+    <div className="container mx-auto p-4">
+      <header className="mb-4">
+        <h1 className="text-3xl font-bold">Developer Resource Dashboard</h1>
+      </header>
+
+      <div className="mb-4 flex gap-4">
+        <Input
+          placeholder="Search..."
+          value={searchQuery}
+          onChange={(e) => dispatch(setSearchQuery(e.target.value))}
+          className="max-w-sm"
         />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+        <Select
+          value={languageFilter}
+          onValueChange={(value) => dispatch(setLanguageFilter(value))}
+        >
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Language" />
+          </SelectTrigger>
+          <SelectContent>
+            {languages.map(lang => (
+              <SelectItem key={lang} value={lang}>{lang}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <Tabs defaultValue="github">
+        <TabsList>
+          <TabsTrigger value="github">GitHub Trending</TabsTrigger>
+          <TabsTrigger value="hackernews">Hacker News</TabsTrigger>
+        </TabsList>
+        <TabsContent value="github">
+          <GithubTab repos={filteredRepos} isLoading={isLoadingRepos} error={reposError} />
+        </TabsContent>
+        <TabsContent value="hackernews">
+          <HackerNewsTab
+            storyIds={storyIds?.slice(0, 10) || []}
+            isLoading={isLoadingStoryIds}
+            error={storyIdsError}
+            searchQuery={searchQuery}
+          />
+        </TabsContent>
+      </Tabs>
     </div>
+  );
+}
+
+// GitHub Tab Component
+function GithubTab({ repos, isLoading, error }: { repos: GithubRepo[], isLoading: boolean, error: any }) {
+  if (isLoading) return <RepoSkeleton />;
+  if (error) return <ErrorAlert error={error} />;
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Trending Repositories</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Name</TableHead>
+              <TableHead>Description</TableHead>
+              <TableHead>Stars</TableHead>
+              <TableHead>Language</TableHead>
+              <TableHead></TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {repos.map(repo => (
+              <TableRow key={repo.id}>
+                <TableCell className="font-medium">{repo.name}</TableCell>
+                <TableCell>{repo.description}</TableCell>
+                <TableCell>{repo.stargazers_count}</TableCell>
+                <TableCell>{repo.language}</TableCell>
+                <TableCell>
+                  <a href={repo.html_url} target="_blank" rel="noopener noreferrer">
+                    <Button variant="outline">View</Button>
+                  </a>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </CardContent>
+    </Card>
+  );
+}
+
+// Hacker News Tab Component
+function HackerNewsTab({ storyIds, isLoading, error, searchQuery }: { storyIds: number[], isLoading: boolean, error: any, searchQuery: string }) {
+  if (isLoading) return <StorySkeleton />;
+  if (error) return <ErrorAlert error={error} />;
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Top Stories</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Title</TableHead>
+              <TableHead>Author</TableHead>
+              <TableHead>Score</TableHead>
+              <TableHead></TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {storyIds.map(id => <StoryRow key={id} id={id} searchQuery={searchQuery} />)}
+          </TableBody>
+        </Table>
+      </CardContent>
+    </Card>
+  );
+}
+
+// Single Story Row for HN
+function StoryRow({ id, searchQuery }: { id: number, searchQuery: string }) {
+  const { data: story, isLoading, error } = useGetStoryDetailsQuery(id);
+
+  if (isLoading || error || !story) return null;
+
+  if (searchQuery !== '' && !story.title.toLowerCase().includes(searchQuery.toLowerCase())) {
+    return null;
+  }
+
+  return (
+    <TableRow>
+      <TableCell className="font-medium">{story.title}</TableCell>
+      <TableCell>{story.by}</TableCell>
+      <TableCell>{story.score}</TableCell>
+      <TableCell>
+        {story.url && (
+          <a href={story.url} target="_blank" rel="noopener noreferrer">
+            <Button variant="outline">View</Button>
+          </a>
+        )}
+      </TableCell>
+    </TableRow>
+  );
+}
+
+// Skeleton Loaders
+function RepoSkeleton() {
+    return (
+        <Card>
+            <CardHeader>
+                <Skeleton className="h-8 w-1/2" />
+            </CardHeader>
+            <CardContent>
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead><Skeleton className="h-4 w-[100px]" /></TableHead>
+                            <TableHead><Skeleton className="h-4 w-[250px]" /></TableHead>
+                            <TableHead><Skeleton className="h-4 w-[50px]" /></TableHead>
+                            <TableHead><Skeleton className="h-4 w-[80px]" /></TableHead>
+                            <TableHead><Skeleton className="h-4 w-[50px]" /></TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {[...Array(5)].map((_, i) => (
+                            <TableRow key={i}>
+                                <TableCell><Skeleton className="h-4 w-[150px]" /></TableCell>
+                                <TableCell><Skeleton className="h-4 w-[300px]" /></TableCell>
+                                <TableCell><Skeleton className="h-4 w-[50px]" /></TableCell>
+                                <TableCell><Skeleton className="h-4 w-[100px]" /></TableCell>
+                                <TableCell><Skeleton className="h-9 w-[55px]" /></TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+            </CardContent>
+        </Card>
+    );
+}
+
+function StorySkeleton() {
+    return (
+        <Card>
+            <CardHeader>
+                <Skeleton className="h-8 w-1/2" />
+            </CardHeader>
+            <CardContent>
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead><Skeleton className="h-4 w-[300px]" /></TableHead>
+                            <TableHead><Skeleton className="h-4 w-[100px]" /></TableHead>
+                            <TableHead><Skeleton className="h-4 w-[50px]" /></TableHead>
+                            <TableHead><Skeleton className="h-4 w-[50px]" /></TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {[...Array(10)].map((_, i) => (
+                            <TableRow key={i}>
+                                <TableCell><Skeleton className="h-4 w-full" /></TableCell>
+                                <TableCell><Skeleton className="h-4 w-[100px]" /></TableCell>
+                                <TableCell><Skeleton className="h-4 w-[50px]" /></TableCell>
+                                <TableCell><Skeleton className="h-9 w-[55px]" /></TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+            </CardContent>
+        </Card>
+    );
+}
+
+// Error Alert
+function ErrorAlert({ error }: { error: any }) {
+  // Attempt to parse a meaningful message
+  const message = error?.data?.message || error?.error || 'An unexpected error occurred.';
+  return (
+    <Alert variant="destructive">
+      <AlertTitle>Error Fetching Data</AlertTitle>
+      <AlertDescription>{message}</AlertDescription>
+    </Alert>
   );
 }
