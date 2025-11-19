@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useGetTrendingReposQuery } from '../lib/store/githubApi';
 import { useGetTopStoryIdsQuery, useGetStoryDetailsQuery } from '../lib/store/hackerNewsApi';
@@ -13,8 +13,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { ResourceDetailDialog } from '@/components/ResourceDetailDialog';
+import { ApiErrorFallback } from '@/components/ApiErrorFallback';
 import type { GithubRepo } from '../lib/store/githubApi';
+import type { HNStory } from '../lib/store/hackerNewsApi';
 
 // Main Dashboard Page
 export default function DashboardPage() {
@@ -92,8 +94,16 @@ export default function DashboardPage() {
 
 // GitHub Tab Component
 function GithubTab({ repos, isLoading, error }: { repos: GithubRepo[], isLoading: boolean, error: any }) {
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [selectedResource, setSelectedResource] = useState<{ title: string; description?: string | null; url: string } | null>(null);
+
+  const openDialog = (resource: { title: string; description?: string | null; url: string }) => {
+    setSelectedResource(resource);
+    setDialogOpen(true);
+  };
+
   if (isLoading) return <RepoSkeleton />;
-  if (error) return <ErrorAlert error={error} />;
+  if (error) return <ApiErrorFallback error={error} />;
 
   return (
     <Card>
@@ -119,15 +129,24 @@ function GithubTab({ repos, isLoading, error }: { repos: GithubRepo[], isLoading
                 <TableCell>{repo.stargazers_count}</TableCell>
                 <TableCell>{repo.language}</TableCell>
                 <TableCell>
-                  <a href={repo.html_url} target="_blank" rel="noopener noreferrer">
-                    <Button variant="outline">View</Button>
-                  </a>
+                  <Button variant="outline" onClick={() => openDialog({ title: repo.name, description: repo.description, url: repo.html_url })}>
+                    View
+                  </Button>
                 </TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
       </CardContent>
+      {selectedResource && (
+        <ResourceDetailDialog
+          open={dialogOpen}
+          onClose={() => setDialogOpen(false)}
+          title={selectedResource.title}
+          description={selectedResource.description}
+          url={selectedResource.url}
+        />
+      )}
     </Card>
   );
 }
@@ -135,7 +154,7 @@ function GithubTab({ repos, isLoading, error }: { repos: GithubRepo[], isLoading
 // Hacker News Tab Component
 function HackerNewsTab({ storyIds, isLoading, error, searchQuery }: { storyIds: number[], isLoading: boolean, error: any, searchQuery: string }) {
   if (isLoading) return <StorySkeleton />;
-  if (error) return <ErrorAlert error={error} />;
+  if (error) return <ApiErrorFallback error={error} />;
 
   return (
     <Card>
@@ -164,8 +183,17 @@ function HackerNewsTab({ storyIds, isLoading, error, searchQuery }: { storyIds: 
 // Single Story Row for HN
 function StoryRow({ id, searchQuery }: { id: number, searchQuery: string }) {
   const { data: story, isLoading, error } = useGetStoryDetailsQuery(id);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [selectedResource, setSelectedResource] = useState<{ title: string; description?: string | null; url: string } | null>(null);
 
-  if (isLoading || error || !story) return null;
+  const openDialog = (resource: { title: string; description?: string | null; url: string }) => {
+    setSelectedResource(resource);
+    setDialogOpen(true);
+  };
+
+  if (isLoading) return null; // Or a row skeleton
+  if (error) return <TableRow><TableCell colSpan={4}><ApiErrorFallback error={error} /></TableCell></TableRow>;
+  if (!story) return null;
 
   if (searchQuery !== '' && !story.title.toLowerCase().includes(searchQuery.toLowerCase())) {
     return null;
@@ -177,12 +205,23 @@ function StoryRow({ id, searchQuery }: { id: number, searchQuery: string }) {
       <TableCell>{story.by}</TableCell>
       <TableCell>{story.score}</TableCell>
       <TableCell>
-        {story.url && (
-          <a href={story.url} target="_blank" rel="noopener noreferrer">
-            <Button variant="outline">View</Button>
-          </a>
+        {story.url ? (
+          <Button variant="outline" onClick={() => openDialog({ title: story.title, description: `Author: ${story.by}, Score: ${story.score}`, url: story.url })}>
+            View
+          </Button>
+        ) : (
+          <Button variant="outline" disabled>No URL</Button>
         )}
       </TableCell>
+      {selectedResource && (
+        <ResourceDetailDialog
+          open={dialogOpen}
+          onClose={() => setDialogOpen(false)}
+          title={selectedResource.title}
+          description={selectedResource.description}
+          url={selectedResource.url}
+        />
+      )}
     </TableRow>
   );
 }
@@ -252,16 +291,4 @@ function StorySkeleton() {
             </CardContent>
         </Card>
     );
-}
-
-// Error Alert
-function ErrorAlert({ error }: { error: any }) {
-  // Attempt to parse a meaningful message
-  const message = error?.data?.message || error?.error || 'An unexpected error occurred.';
-  return (
-    <Alert variant="destructive">
-      <AlertTitle>Error Fetching Data</AlertTitle>
-      <AlertDescription>{message}</AlertDescription>
-    </Alert>
-  );
 }
