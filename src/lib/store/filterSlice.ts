@@ -7,7 +7,7 @@ interface FilterState {
 
 const initialState: FilterState = {
   searchQuery: '',
-  languageFilter: '',
+  languageFilter: 'All',
 };
 
 const filterSlice = createSlice({

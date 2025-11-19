@@ -17,6 +17,10 @@ import { ResourceDetailDialog } from '@/components/ResourceDetailDialog';
 import { ApiErrorFallback } from '@/components/ApiErrorFallback';
 import type { GithubRepo } from '../lib/store/githubApi';
 import type { HNStory } from '../lib/store/hackerNewsApi';
+import { FetchBaseQueryError } from '@reduxjs/toolkit/query';
+import { SerializedError } from '@reduxjs/toolkit';
+
+type RTKQueryError = FetchBaseQueryError | SerializedError | undefined;
 
 // Main Dashboard Page
 export default function DashboardPage() {
@@ -28,16 +32,16 @@ export default function DashboardPage() {
 
   const languages = useMemo(() => {
     if (!reposData) return [];
-    const langSet = new Set(reposData.items.map(repo => repo.language).filter(Boolean) as string[]);
+    const langSet = new Set(reposData.map(repo => repo.language).filter(Boolean) as string[]);
     return ['All', ...Array.from(langSet)];
   }, [reposData]);
 
   const filteredRepos = useMemo(() => {
     if (!reposData) return [];
-    return reposData.items.filter(repo => {
+    return reposData.filter(repo => {
       const matchesSearch = searchQuery === '' || 
                             repo.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                            (repo.description && repo.description.toLowerCase().includes(searchQuery.toLowerCase()));
+                            repo?.description?.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesLanguage = languageFilter === 'All' || repo.language === languageFilter;
       return matchesSearch && matchesLanguage;
     });
@@ -93,7 +97,7 @@ export default function DashboardPage() {
 }
 
 // GitHub Tab Component
-function GithubTab({ repos, isLoading, error }: { repos: GithubRepo[], isLoading: boolean, error: any }) {
+function GithubTab({ repos, isLoading, error }: { repos: GithubRepo[], isLoading: boolean, error: RTKQueryError }) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedResource, setSelectedResource] = useState<{ title: string; description?: string | null; url: string } | null>(null);
 
@@ -152,7 +156,7 @@ function GithubTab({ repos, isLoading, error }: { repos: GithubRepo[], isLoading
 }
 
 // Hacker News Tab Component
-function HackerNewsTab({ storyIds, isLoading, error, searchQuery }: { storyIds: number[], isLoading: boolean, error: any, searchQuery: string }) {
+function HackerNewsTab({ storyIds, isLoading, error, searchQuery }: { storyIds: number[], isLoading: boolean, error: RTKQueryError, searchQuery: string }) {
   if (isLoading) return <StorySkeleton />;
   if (error) return <ApiErrorFallback error={error} />;
 

@@ -21,8 +21,9 @@ export const githubApi = createApi({
   reducerPath: 'githubApi',
   baseQuery: fetchBaseQuery({ baseUrl: 'https://api.github.com/' }),
   endpoints: (builder) => ({
-    getTrendingRepos: builder.query<GithubSearchResponse, void>({
+    getTrendingRepos: builder.query<GithubRepo[], void>({
       query: () => 'search/repositories?q=stars:>1&sort=stars&order=desc&per_page=10',
+      transformResponse: (response: GithubSearchResponse) => response.items,
     }),
   }),
 });
