@@ -1,8 +1,16 @@
-import { configureStore } from '@reduxjs/toolkit'
+import { configureStore, createSlice } from '@reduxjs/toolkit'
+
+const dummySlice = createSlice({
+  name: 'dummy',
+  initialState: {},
+  reducers: {}
+});
 
 export const makeStore = () => {
   return configureStore({
-    reducer: {}
+    reducer: {
+      dummy: dummySlice.reducer
+    }
   })
 }
 
