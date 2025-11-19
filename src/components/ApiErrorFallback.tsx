@@ -10,13 +10,13 @@ interface ApiErrorFallbackProps {
   error: RTKQueryError;
 }
 
-export function ApiErrorFallback({ error }: ApiErrorFallbackProps) {
+export function ApiErrorFallback({ error }: Readonly<ApiErrorFallbackProps>) {
   // Attempt to parse a meaningful message from RTK Query error object
   let message = 'An unexpected API error occurred during data fetch.';
 
   if (error) {
     if ('status' in error) { // FetchBaseQueryError
-      message = `Error ${error.status}: ${JSON.stringify(error.data || error.error)}`;
+      message = `Error ${error.status}: ${JSON.stringify(error.data || (error as unknown as Record<string, unknown>)?.error)}`;
     } else { // SerializedError
       message = error.message || message;
     }
