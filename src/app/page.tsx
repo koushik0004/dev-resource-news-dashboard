@@ -2,10 +2,10 @@
 
 import { useState, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useGetTrendingReposQuery } from '../lib/store/githubApi';
-import { useGetTopStoryIdsQuery, useGetStoryDetailsQuery } from '../lib/store/hackerNewsApi';
-import { setSearchQuery, setLanguageFilter } from '../lib/store/filterSlice';
-import type { RootState } from '../lib/store/store';
+import { useGetTrendingReposQuery } from '@/lib/store/githubApi';
+import { useGetTopStoryIdsQuery, useGetStoryDetailsQuery } from '@/lib/store/hackerNewsApi';
+import { setSearchQuery, setLanguageFilter } from '@/lib/store/filterSlice';
+import type { RootState } from '@/lib/store/store';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -15,7 +15,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ResourceDetailDialog } from '@/components/ResourceDetailDialog';
 import { ApiErrorFallback } from '@/components/ApiErrorFallback';
-import type { GithubRepo } from '../lib/store/githubApi';
+import type { GithubRepo } from '@/lib/store/githubApi';
 import { FetchBaseQueryError } from '@reduxjs/toolkit/query';
 import { SerializedError } from '@reduxjs/toolkit';
 
