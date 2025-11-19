@@ -16,7 +16,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ResourceDetailDialog } from '@/components/ResourceDetailDialog';
 import { ApiErrorFallback } from '@/components/ApiErrorFallback';
 import type { GithubRepo } from '../lib/store/githubApi';
-import type { HNStory } from '../lib/store/hackerNewsApi';
 import { FetchBaseQueryError } from '@reduxjs/toolkit/query';
 import { SerializedError } from '@reduxjs/toolkit';
 
@@ -97,7 +96,7 @@ export default function DashboardPage() {
 }
 
 // GitHub Tab Component
-function GithubTab({ repos, isLoading, error }: { repos: GithubRepo[], isLoading: boolean, error: RTKQueryError }) {
+function GithubTab({ repos, isLoading, error }: Readonly<{ repos: GithubRepo[], isLoading: boolean, error: RTKQueryError }>) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedResource, setSelectedResource] = useState<{ title: string; description?: string | null; url: string } | null>(null);
 
@@ -156,7 +155,7 @@ function GithubTab({ repos, isLoading, error }: { repos: GithubRepo[], isLoading
 }
 
 // Hacker News Tab Component
-function HackerNewsTab({ storyIds, isLoading, error, searchQuery }: { storyIds: number[], isLoading: boolean, error: RTKQueryError, searchQuery: string }) {
+function HackerNewsTab({ storyIds, isLoading, error, searchQuery }: Readonly<{ storyIds: number[], isLoading: boolean, error: RTKQueryError, searchQuery: string }>) {
   if (isLoading) return <StorySkeleton />;
   if (error) return <ApiErrorFallback error={error} />;
 
@@ -185,7 +184,7 @@ function HackerNewsTab({ storyIds, isLoading, error, searchQuery }: { storyIds: 
 }
 
 // Single Story Row for HN
-function StoryRow({ id, searchQuery }: { id: number, searchQuery: string }) {
+function StoryRow({ id, searchQuery }: Readonly<{ id: number, searchQuery: string }>) {
   const { data: story, isLoading, error } = useGetStoryDetailsQuery(id);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedResource, setSelectedResource] = useState<{ title: string; description?: string | null; url: string } | null>(null);
