@@ -1,16 +1,13 @@
-import { configureStore, createSlice } from '@reduxjs/toolkit'
-
-const dummySlice = createSlice({
-  name: 'dummy',
-  initialState: {},
-  reducers: {}
-});
+import { configureStore } from '@reduxjs/toolkit'
+import { githubApi } from './githubApi'
 
 export const makeStore = () => {
   return configureStore({
     reducer: {
-      dummy: dummySlice.reducer
-    }
+      [githubApi.reducerPath]: githubApi.reducer,
+    },
+    middleware: (getDefaultMiddleware) =>
+      getDefaultMiddleware().concat(githubApi.middleware),
   })
 }
 
