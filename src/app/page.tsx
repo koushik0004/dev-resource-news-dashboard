@@ -25,6 +25,7 @@ type RTKQueryError = FetchBaseQueryError | SerializedError | undefined;
 export default function DashboardPage() {
   const dispatch = useDispatch();
   const { searchQuery, languageFilter } = useSelector((state: RootState) => state.filter);
+  const [activeTab, setActiveTab] = useState('github');
 
   const { data: reposData, isLoading: isLoadingRepos, error: reposError } = useGetTrendingReposQuery();
   const { data: storyIds, isLoading: isLoadingStoryIds, error: storyIdsError } = useGetTopStoryIdsQuery();
@@ -59,22 +60,24 @@ export default function DashboardPage() {
           onChange={(e) => dispatch(setSearchQuery(e.target.value))}
           className="max-w-sm"
         />
-        <Select
-          value={languageFilter}
-          onValueChange={(value) => dispatch(setLanguageFilter(value))}
-        >
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Language" />
-          </SelectTrigger>
-          <SelectContent>
-            {languages.map(lang => (
-              <SelectItem key={lang} value={lang}>{lang}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        {activeTab === 'github' && (
+          <Select
+            value={languageFilter}
+            onValueChange={(value) => dispatch(setLanguageFilter(value))}
+          >
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Language" />
+            </SelectTrigger>
+            <SelectContent>
+              {languages.map(lang => (
+                <SelectItem key={lang} value={lang}>{lang}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
       </div>
 
-      <Tabs defaultValue="github">
+      <Tabs defaultValue="github" onValueChange={(value) => setActiveTab(value)}>
         <TabsList>
           <TabsTrigger value="github">GitHub Trending</TabsTrigger>
           <TabsTrigger value="hackernews">Hacker News</TabsTrigger>
