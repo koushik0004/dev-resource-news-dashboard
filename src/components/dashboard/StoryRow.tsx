@@ -26,19 +26,21 @@ export function StoryRow({ id, searchQuery }: Readonly<{ id: number, searchQuery
   }
 
   return (
-    <TableRow>
-      <TableCell className="font-medium">{story.title}</TableCell>
-      <TableCell>{story.by}</TableCell>
-      <TableCell>{story.score}</TableCell>
-      <TableCell>
-        {story.url ? (
-          <Button variant="outline" onClick={() => openDialog({ title: story.title, description: `Author: ${story.by}, Score: ${story.score}`, url: story.url })}>
-            View
-          </Button>
-        ) : (
-          <Button variant="outline" disabled>No URL</Button>
-        )}
-      </TableCell>
+    <>
+      <TableRow>
+        <TableCell className="font-medium">{story.title}</TableCell>
+        <TableCell>{story.by}</TableCell>
+        <TableCell>{story.score}</TableCell>
+        <TableCell>
+          {story.url ? (
+            <Button variant="outline" onClick={() => openDialog({ title: story.title, description: `Author: ${story.by}, Score: ${story.score}`, url: story.url })}>
+              View
+            </Button>
+          ) : (
+            <Button variant="outline" disabled>No URL</Button>
+          )}
+        </TableCell>
+      </TableRow>
       {selectedResource && (
         <ResourceDetailDialog
           open={dialogOpen}
@@ -48,6 +50,6 @@ export function StoryRow({ id, searchQuery }: Readonly<{ id: number, searchQuery
           url={selectedResource.url}
         />
       )}
-    </TableRow>
+    </>
   );
 }
