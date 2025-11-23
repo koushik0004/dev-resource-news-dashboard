@@ -1,0 +1,18 @@
+{
+  "jestrunner.jestCommand": "npm test",
+  "jestrunner.monitorConsole": true,
+  "jestrunner.testFilePattern": "**/*.{test,spec}.{ts,tsx}",
+  "jestrunner.rootDir": ".",
+  "jestrunner.setupFile": "jest.setup.ts",
+  "jestrunner.testEnvironment": "jest-environment-jsdom",
+  "jestrunner.moduleNameMapper": {
+    "^@/(.*)$": "<rootDir>/src/$1"
+  },
+  "jestrunner.coverageFormatter": "jest",
+  "jestrunner.debugMode": true,
+  "jestrunner.autoRun": false,
+  "jest.runMode": "watch",
+  "jest.coverageFormatter": "DefaultFormatter",
+  "jestrunner.jestCommandLine": "npm test --maxWorkers=1",
+  "jestrunner.testTimeout": 10000
+}

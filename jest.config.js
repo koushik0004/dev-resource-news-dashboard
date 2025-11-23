@@ -5,4 +5,25 @@ module.exports = {
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
   },
+  roots: ['<rootDir>'],
+  testMatch: [
+    '**/__tests__/**/*.{ts,tsx}',
+    '**/*.{test,spec}.{ts,tsx}',
+  ],
+  transform: {
+    '^.+\\.(ts|tsx)$': 'ts-jest',
+  },
+  transformIgnorePatterns: [
+    '/node_modules/',
+  ],
+  moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
+  collectCoverageFrom: [
+    'src/**/*.{ts,tsx}',
+    '!src/**/*.d.ts',
+    '!src/**/*.stories.{ts,tsx}',
+    '!src/**/__tests__/**',
+  ],
+  coverageDirectory: 'coverage',
+  coverageReporters: ['text', 'lcov', 'html'],
+  maxWorkers: 1,
 };
